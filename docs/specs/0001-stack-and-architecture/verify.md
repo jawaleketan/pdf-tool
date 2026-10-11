@@ -18,7 +18,7 @@ _Steps derived from spec 0001's scaffold done criteria and build conventions. `/
 - [x] Restore with a plain `pnpm build` → default `http://localhost:4321` back in the output → environment and site URL convention
 - [x] Measure gzipped JS: inline module script in `dist/index.html` plus `dist/_astro/*.js` → total under 51,200 bytes (scaffold measured 2,347) → performance budget convention
 - [x] `ls .nvmrc` and `node -p "require('./package.json').engines.node"` → `.nvmrc` says 24, engines say `>=24.0.0 <25`; dependency versions in `package.json` have no `^` → versions and pinning convention
-- [ ] CI workflow exists at `.github/workflows/ci.yml` and runs `pnpm check`, `pnpm build`, `pnpm test` → scaffold done criteria (passes in CI) — BLOCKED 2026-10-10: file verified and each command passes locally, but the workflow itself cannot execute without a git repository and a remote runner
+- [x] CI workflow exists at `.github/workflows/ci.yml` and runs `pnpm check`, `pnpm build`, `pnpm test` → scaffold done criteria (passes in CI) — passed in CI 2026-10-11: https://github.com/jawaleketan/pdf-tool/actions/runs/38115969142, all steps green (install, check, build, test)
 
 ## Acceptance-criteria coverage
 

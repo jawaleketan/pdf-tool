@@ -32,7 +32,7 @@ Decide the stack and scaffold a runnable project so every later release builds o
 **Done when:** the stack is recorded in a spec and the empty scaffold boots locally and passes build.
 - [x] Design it (spec): [0001](../specs/0001-stack-and-architecture/index.md)
 - [x] Scaffold from the decision: `/develop stack & architecture` · code in `src/`, `functions/`, `tests/`, `e2e/`
-- [ ] Verify it: `/check verify stack & architecture`
+- [x] Verify it: `/check verify stack & architecture`
 - [ ] Test it: `/test stack & architecture`
 
 ### 2. Coding standards & tooling
