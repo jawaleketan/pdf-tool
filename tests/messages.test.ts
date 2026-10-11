@@ -18,6 +18,11 @@ describe('clampProgress', () => {
     expect(clampProgress(Number.NaN)).toBe(0);
     expect(clampProgress(Number.POSITIVE_INFINITY)).toBe(0);
   });
+
+  it('keeps the exact bounds as whole numbers', () => {
+    expect(clampProgress(0)).toBe(0);
+    expect(clampProgress(100)).toBe(100);
+  });
 });
 
 describe('isRunRequest', () => {
@@ -32,6 +37,12 @@ describe('isRunRequest', () => {
     expect(isRunRequest({ type: 'run', id: 'merge-1', tool: 'merge' })).toBe(false);
     expect(isRunRequest({ type: 'cancel', id: 'merge-1' })).toBe(false);
   });
+
+  it('rejects ids, tools, and files that are not of the right shape', () => {
+    expect(isRunRequest({ type: 'run', id: 7, tool: 'merge', files: [] })).toBe(false);
+    expect(isRunRequest({ type: 'run', id: 'merge-1', tool: null, files: [] })).toBe(false);
+    expect(isRunRequest({ type: 'run', id: 'merge-1', tool: 'merge', files: 'x' })).toBe(false);
+  });
 });
 
 describe('isCancelRequest', () => {
@@ -41,6 +52,11 @@ describe('isCancelRequest', () => {
 
   it('rejects a run message', () => {
     expect(isCancelRequest({ id: 'merge-1', type: 'run', tool: 'merge', files: [] })).toBe(false);
+  });
+
+  it('rejects a cancel without a string id', () => {
+    expect(isCancelRequest({ type: 'cancel' })).toBe(false);
+    expect(isCancelRequest({ type: 'cancel', id: 7 })).toBe(false);
   });
 });
 
@@ -56,5 +72,10 @@ describe('isWorkerResponse', () => {
     expect(isWorkerResponse({ id: 'a', type: 'shout' })).toBe(false);
     expect(isWorkerResponse('progress')).toBe(false);
     expect(isWorkerResponse(undefined)).toBe(false);
+  });
+
+  it('rejects a known type whose id is not a string', () => {
+    expect(isWorkerResponse({ id: 7, type: 'progress', percent: 10 })).toBe(false);
+    expect(isWorkerResponse({ id: null, type: 'error', message: 'boom' })).toBe(false);
   });
 });
