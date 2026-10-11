@@ -11,7 +11,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
-| 1 | Stack & architecture | Foundation | in-progress |
+| 1 | Stack & architecture | Foundation | done |
 | 2 | Coding standards & tooling | Foundation | planned |
 | 3 | Data model | Foundation | planned |
 | 4 | Design system & UI foundation | Foundation | planned |
@@ -33,7 +33,7 @@ Decide the stack and scaffold a runnable project so every later release builds o
 - [x] Design it (spec): [0001](../specs/0001-stack-and-architecture/index.md)
 - [x] Scaffold from the decision: `/develop stack & architecture` · code in `src/`, `functions/`, `tests/`, `e2e/`
 - [x] Verify it: `/check verify stack & architecture`
-- [ ] Test it: `/test stack & architecture`
+- [x] Test it: `/test stack & architecture`
 
 ### 2. Coding standards & tooling
 Capture conventions from the real project, then install lint, format, and commit checks that keep every later change honest.

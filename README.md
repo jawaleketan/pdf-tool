@@ -3,7 +3,7 @@
 A browser based PDF tool site (merge, split, compress, then convert). The
 search pages are static HTML; every tool runs in the visitor's browser, so
 files never leave the device. The stack decision lives in
-`docs/specs/0001-stack-and-architecture.md`.
+`docs/specs/0001-stack-and-architecture/`.
 
 Stack: Astro 7 (static output), TypeScript (strict), Tailwind CSS 4,
 pdf-lib + PDF.js in Web Workers (installed per tool release), Cloudflare Pages

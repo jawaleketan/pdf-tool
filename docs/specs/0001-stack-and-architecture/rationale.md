@@ -1,6 +1,6 @@
 # 0001. Stack and architecture: reasoning
 
-**Status**: In Progress (governed by [index.md](index.md))
+**Status**: Accepted (governed by [index.md](index.md))
 
 ## Context
 
