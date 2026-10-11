@@ -1,0 +1,25 @@
+---
+// Reports whether the Web Worker started and answered, proving worker scripts
+// run on this build under the production headers (spec 0001 scaffold criteria).
+// No UI framework is installed yet; the tool features bring their own islands.
+---
+
+<p data-worker-probe class="mt-8 rounded border border-gray-200 p-3 text-sm text-gray-600">
+  Checking the worker…
+</p>
+
+<script>
+  import { createToolWorker } from '../lib/pdf/createToolWorker';
+
+  const probe = document.querySelector('[data-worker-probe]');
+
+  if (probe) {
+    const worker = createToolWorker('merge');
+    worker.run([], undefined, {
+      onError: (message) => {
+        probe.textContent = `Worker running. ${message}`;
+        worker.terminate();
+      },
+    });
+  }
+</script>

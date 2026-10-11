@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import WorkerProbe from '../components/WorkerProbe.astro';
+
+const tools = (await getCollection('tools')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout
+  title="PDF Utilities"
+  description="Free browser based PDF tools: merge, split, compress, and convert. Your files never leave your device."
+>
+  <h1 class="text-3xl font-bold">PDF Utilities</h1>
+  <p class="mt-4 text-lg text-gray-700">
+    Free PDF tools that run in your browser. Your files never leave your device.
+  </p>
+
+  <ul class="mt-8 space-y-4">
+    {
+      tools.map((tool) => (
+        <li class="rounded border border-gray-200 p-4">
+          <h2 class="font-semibold">{tool.data.title}</h2>
+          <p class="text-sm text-gray-600">{tool.data.description}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <WorkerProbe />
+</BaseLayout>
