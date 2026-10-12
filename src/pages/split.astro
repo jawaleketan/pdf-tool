@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SplitTool from '../components/tools/SplitTool.astro';
+import AdSlot from '../components/AdSlot.astro';
+import WorkerProbe from '../components/WorkerProbe.astro';
+---
+
+<BaseLayout
+  title="Free PDF Split Tool — Split PDF Files Online in Browser"
+  description="Split PDF files into individual pages, extract page ranges, or specific pages securely in your browser. 100% private, zero uploads."
+>
+  <!-- Hero Section -->
+  <section class="py-8 text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+      Split PDF Documents Online
+    </h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+      Extract pages or split your PDF into separate files right in your browser. Your files never
+      leave your device.
+    </p>
+  </section>
+
+  <!-- Primary Tool: Split -->
+  <section class="mt-6">
+    <SplitTool />
+    <AdSlot slotType="banner" class="mt-6" />
+  </section>
+
+  <footer class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 space-y-2">
+    <div class="flex justify-center space-x-6 text-gray-600">
+      <a href="/privacy" class="hover:text-indigo-600">
+        Privacy Policy
+      </a>
+      <a href="/terms" class="hover:text-indigo-600">
+        Terms of Service
+      </a>
+    </div>
+    <p>
+      © {new Date().getFullYear()} PDF Utilities. All rights reserved. 100% Client-Side Processing.
+    </p>
+  </footer>
+
+  <WorkerProbe />
+</BaseLayout>

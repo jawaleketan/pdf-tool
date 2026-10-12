@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy Policy — PDF Utilities"
+  description="Our commitment to your privacy. All PDF processing happens 100% locally in your browser with zero server uploads."
+>
+  <div class="space-y-8">
+    <div class="border-b border-gray-200 pb-6">
+      <nav class="text-sm font-medium text-indigo-600 mb-2">
+        <a href="/" class="hover:underline">
+          ← Back to home
+        </a>
+      </nav>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Privacy Policy</h1>
+      <p class="mt-2 text-sm text-gray-500">Last updated: October 12, 2026</p>
+    </div>
+
+    <div class="prose prose-gray max-w-none space-y-6 text-gray-700 text-sm leading-relaxed">
+      <h2 class="text-xl font-bold text-gray-900">1. Overview</h2>
+      <p>
+        PDF Utilities ("we", "our", or "us") is committed to protecting your privacy. This Privacy
+        Policy explains how our website handles your information when you use our browser-based PDF
+        tools.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">2. Zero Server Uploads</h2>
+      <p>
+        Unlike traditional online PDF tools,{' '}
+        <strong>
+          all PDF processing (merge, split, compress) takes place entirely inside your web browser
+        </strong>{' '}
+        using client-side Web Workers and JavaScript libraries (such as `pdf-lib` and PDF.js). Your
+        files are never uploaded to our servers or stored on any remote disk. Your documents remain
+        strictly on your device.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">3. Analytics and Consent</h2>
+      <p>
+        We use lightweight, privacy-respectful analytics to understand tool usage and improve
+        performance. Analytics scripts and telemetry events do <strong>not</strong> load unless you
+        explicitly grant consent via our consent banner.
+      </p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>Consent preferences are stored locally in your browser (`pdf_utils_consent`).</li>
+        <li>
+          We track tool completion metrics, processing duration ranges, and client errors without
+          capturing personal data or file contents.
+        </li>
+        <li>You can revoke or reject consent at any time.</li>
+      </ul>
+
+      <h2 class="text-xl font-bold text-gray-900">4. Advertising</h2>
+      <p>
+        To support free access to our utilities, we may display non-intrusive advertisements. Ad
+        networks are governed by their respective privacy policies and operate in compliance with
+        browser privacy standards.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">5. Contact Us</h2>
+      <p>
+        If you have any questions about this Privacy Policy, please reach out via our community
+        channels or repository issues.
+      </p>
+    </div>
+  </div>
+
+  <footer class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 space-y-2">
+    <div class="flex justify-center space-x-6 text-gray-600">
+      <a href="/privacy" class="hover:text-indigo-600">
+        Privacy Policy
+      </a>
+      <a href="/terms" class="hover:text-indigo-600">
+        Terms of Service
+      </a>
+    </div>
+    <p>
+      © {new Date().getFullYear()} PDF Utilities. All rights reserved. 100% Client-Side Processing.
+    </p>
+  </footer>
+</BaseLayout>

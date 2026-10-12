@@ -17,4 +17,23 @@ const tools = defineCollection({
   }),
 });
 
-export const collections = { tools };
+const variants = defineCollection({
+  loader: glob({ base: './src/content/variants', pattern: '**/*.md' }),
+  schema: z.object({
+    toolId: z.string(),
+    slug: z.string(),
+    title: z.string(),
+    description: z.string(),
+    heading: z.string(),
+    faqs: z
+      .array(
+        z.object({
+          question: z.string(),
+          answer: z.string(),
+        }),
+      )
+      .optional(),
+  }),
+});
+
+export const collections = { tools, variants };

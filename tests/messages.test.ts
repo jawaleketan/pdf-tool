@@ -27,9 +27,7 @@ describe('clampProgress', () => {
 
 describe('isRunRequest', () => {
   it('accepts a well formed run request', () => {
-    expect(
-      isRunRequest({ id: 'merge-1', type: 'run', tool: 'merge', files: [] }),
-    ).toBe(true);
+    expect(isRunRequest({ id: 'merge-1', type: 'run', tool: 'merge', files: [] })).toBe(true);
   });
 
   it('rejects anything else', () => {
@@ -63,7 +61,9 @@ describe('isCancelRequest', () => {
 describe('isWorkerResponse', () => {
   it('accepts progress, result, and error messages', () => {
     expect(isWorkerResponse({ id: 'a', type: 'progress', percent: 10 })).toBe(true);
-    expect(isWorkerResponse({ id: 'a', type: 'result', file: new ArrayBuffer(0), name: 'x.pdf' })).toBe(true);
+    expect(
+      isWorkerResponse({ id: 'a', type: 'result', file: new ArrayBuffer(0), name: 'x.pdf' }),
+    ).toBe(true);
     expect(isWorkerResponse({ id: 'a', type: 'error', message: 'boom' })).toBe(true);
   });
 

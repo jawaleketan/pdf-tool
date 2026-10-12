@@ -1,30 +1,82 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import MergeTool from '../components/tools/MergeTool.astro';
+import AdSlot from '../components/AdSlot.astro';
 import WorkerProbe from '../components/WorkerProbe.astro';
 
 const tools = (await getCollection('tools')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout
-  title="PDF Utilities"
-  description="Free browser based PDF tools: merge, split, compress, and convert. Your files never leave your device."
+  title="Free PDF Merge Tool — Combine PDF Files Online in Browser"
+  description="Merge multiple PDF files into one document securely in your browser. Nothing to download, zero server uploads, 100% private. Your files never leave your device."
 >
-  <h1 class="text-3xl font-bold">PDF Utilities</h1>
-  <p class="mt-4 text-lg text-gray-700">
-    Free PDF tools that run in your browser. Your files never leave your device.
-  </p>
+  <!-- Hero Section -->
+  <section class="py-8 text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+      Fast & Secure PDF Utilities
+    </h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+      Merge, split, and compress PDF files right in your browser. Your files never leave your
+      device.
+    </p>
+  </section>
 
-  <ul class="mt-8 space-y-4">
-    {
-      tools.map((tool) => (
-        <li class="rounded border border-gray-200 p-4">
-          <h2 class="font-semibold">{tool.data.title}</h2>
-          <p class="text-sm text-gray-600">{tool.data.description}</p>
-        </li>
-      ))
-    }
-  </ul>
+  <!-- Primary Tool: Merge -->
+  <section class="mt-6">
+    <MergeTool />
+    <AdSlot slotType="banner" class="mt-6" />
+  </section>
+
+  <!-- All Tools Section -->
+  <section class="mt-16">
+    <h2 class="text-2xl font-bold text-gray-900">All PDF Tools</h2>
+    <div class="mt-6 grid gap-6 sm:grid-cols-2">
+      {tools.map((tool) => {
+        const isMerge = tool.id.includes('merge');
+        const isSplit = tool.id.includes('split');
+        const isCompress = tool.id.includes('compress');
+        const isConvert = tool.id.includes('convert');
+        const href = isMerge
+          ? '/'
+          : isSplit
+            ? '/split'
+            : isCompress
+              ? '/compress'
+              : isConvert
+                ? '/convert'
+                : '#';
+        const isAvailable = isMerge || isSplit || isCompress || isConvert;
+        return (
+          <a
+            href={href}
+            class="block rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md hover:border-indigo-300"
+          >
+            <h3 class="text-lg font-semibold text-gray-900">{tool.data.title}</h3>
+            <p class="mt-2 text-sm text-gray-600">{tool.data.description}</p>
+            <span class="mt-4 inline-block text-sm font-medium text-indigo-600">
+              {isAvailable ? 'Available now →' : 'Coming soon'}
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  <footer class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 space-y-2">
+    <div class="flex justify-center space-x-6 text-gray-600">
+      <a href="/privacy" class="hover:text-indigo-600">
+        Privacy Policy
+      </a>
+      <a href="/terms" class="hover:text-indigo-600">
+        Terms of Service
+      </a>
+    </div>
+    <p>
+      © {new Date().getFullYear()} PDF Utilities. All rights reserved. 100% Client-Side Processing.
+    </p>
+  </footer>
 
   <WorkerProbe />
 </BaseLayout>

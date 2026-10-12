@@ -1,0 +1,81 @@
+---
+/**
+    ConsentBanner: Fixed bottom banner for consent management (AC-1, AC-2, AC-3).
+    Gates analytics until explicit accept is given.
+*/
+---
+
+<div
+  id="consent-banner"
+  class="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-gray-800 p-4 text-white shadow-lg hidden"
+  role="region"
+  aria-label="Consent Management"
+>
+  <div class="mx-auto max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="text-sm text-gray-300 text-center sm:text-left">
+      We use browser local storage and privacy-respectful metrics to improve your experience. Your
+      files never leave your device. Read our{' '}
+      <a href="/privacy" class="underline hover:text-white">
+        Privacy Policy
+      </a>
+      .
+    </p>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <button
+        type="button"
+        id="consent-reject-btn"
+        class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-xs font-semibold text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+      >
+        Reject
+      </button>
+      <button
+        type="button"
+        id="consent-accept-btn"
+        class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+      >
+        Accept & Continue
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const banner = document.getElementById('consent-banner');
+  const acceptBtn = document.getElementById('consent-accept-btn');
+  const rejectBtn = document.getElementById('consent-reject-btn');
+
+  const CONSENT_KEY = 'pdf_utils_consent';
+
+  function checkConsent() {
+    try {
+      const consent = localStorage.getItem(CONSENT_KEY);
+      if (!consent && banner) {
+        banner.classList.remove('hidden');
+      }
+    } catch {
+      // LocalStorage might be blocked
+    }
+  }
+
+  acceptBtn?.addEventListener('click', () => {
+    try {
+      localStorage.setItem(CONSENT_KEY, 'accepted');
+    } catch {
+      // Ignore if localStorage is restricted
+    }
+    banner?.classList.add('hidden');
+    window.dispatchEvent(new CustomEvent('pdf-consent-updated', { detail: 'accepted' }));
+  });
+
+  rejectBtn?.addEventListener('click', () => {
+    try {
+      localStorage.setItem(CONSENT_KEY, 'rejected');
+    } catch {
+      // Ignore if localStorage is restricted
+    }
+    banner?.classList.add('hidden');
+    window.dispatchEvent(new CustomEvent('pdf-consent-updated', { detail: 'rejected' }));
+  });
+
+  checkConsent();
+</script>

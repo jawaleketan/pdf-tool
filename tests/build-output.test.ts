@@ -11,13 +11,23 @@ import { describe, expect, it } from 'vitest';
  * tree that has no build yet.
  */
 
-const distDir = fileURLToPath(new URL('../dist', import.meta.url));
-const hasDist = existsSync(distDir);
+const baseDist = fileURLToPath(new URL('../dist', import.meta.url));
+const distDir = existsSync(join(baseDist, 'client')) ? join(baseDist, 'client') : baseDist;
+const hasDist = existsSync(baseDist);
 const describeBuild = describe.skipIf(!hasDist);
 
 describeBuild('the build output (run pnpm build first)', () => {
   it('emits the pages, metadata, and header rules the site needs', () => {
-    for (const file of ['index.html', 'robots.txt', 'sitemap-index.xml', '_headers']) {
+    for (const file of [
+      'index.html',
+      'split/index.html',
+      'compress/index.html',
+      'privacy/index.html',
+      'terms/index.html',
+      'robots.txt',
+      'sitemap-index.xml',
+      '_headers',
+    ]) {
       expect(existsSync(join(distDir, file)), `${file} missing from dist/`).toBe(true);
     }
   });
@@ -41,7 +51,7 @@ describeBuild('the build output (run pnpm build first)', () => {
     let total = 0;
 
     for (const file of readdirSync(astroDir)) {
-      if (file.endsWith('.js') && !file.endsWith('.map')) {
+      if (file.endsWith('.js') && !file.endsWith('.map') && !file.includes('worker')) {
         total += gzipSync(readFileSync(join(astroDir, file))).length;
       }
     }

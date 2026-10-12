@@ -1,0 +1,376 @@
+---
+/**
+    CompressTool: Interactive browser-based PDF compression island (supports batch processing).
+    Uses createToolWorker('compress') to process PDFs via Web Worker.
+    Zero main-thread blocking, fully responsive, accessible (WCAG 2.1 AA).
+*/
+---
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" data-compress-tool>
+  <h2 class="text-xl font-bold text-gray-900">Compress PDF Files (Batch Mode)</h2>
+  <p class="mt-1 text-sm text-gray-600">
+    Reduce multiple PDF file sizes in one pass while maintaining visual quality. 100% private, zero
+    server uploads.
+  </p>
+
+  <!-- Dropzone -->
+  <div
+    class="mt-6 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-indigo-500 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500"
+    id="compress-dropzone"
+  >
+    <svg
+      class="h-12 w-12 text-gray-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+      />
+    </svg>
+    <label
+      for="compress-file-input"
+      class="mt-4 cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-500"
+    >
+      <span>Choose PDF files</span>
+      <input
+        id="compress-file-input"
+        name="compress-file-input"
+        type="file"
+        accept=".pdf,application/pdf"
+        multiple
+        class="sr-only"
+      />
+    </label>
+    <p class="mt-1 text-xs text-gray-500">or drag and drop multiple PDF files here</p>
+  </div>
+
+  <!-- File Configuration & Controls -->
+  <div id="compress-config-container" class="mt-6 hidden space-y-6">
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div class="flex items-center justify-between mb-3">
+        <span
+          id="compress-file-count"
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500"
+        >
+          Selected Files (0)
+        </span>
+        <button
+          type="button"
+          id="compress-clear-btn"
+          class="text-xs font-medium text-rose-600 hover:text-rose-800"
+        >
+          Clear All
+        </button>
+      </div>
+      <div
+        id="compress-file-list"
+        class="max-h-48 overflow-y-auto space-y-2 divide-y divide-gray-100"
+      >
+        <!-- Dynamic file items -->
+      </div>
+    </div>
+
+    <!-- Compression Preset Selection -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-900">Compression Level</label>
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label
+          class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none border-indigo-600 ring-2 ring-indigo-600"
+          id="preset-recommended-label"
+        >
+          <input type="radio" name="compress-preset" value="recommended" checked class="sr-only" />
+          <span class="flex flex-col">
+            <span class="block text-sm font-medium text-gray-950">Recommended</span>
+            <span class="block text-xs text-gray-500 mt-1">
+              Best balance of size reduction and visual quality.
+            </span>
+          </span>
+        </label>
+        <label
+          class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none border-gray-200"
+          id="preset-maximum-label"
+        >
+          <input type="radio" name="compress-preset" value="maximum" class="sr-only" />
+          <span class="flex flex-col">
+            <span class="block text-sm font-medium text-gray-950">Maximum</span>
+            <span class="block text-xs text-gray-500 mt-1">
+              Highest compression for smallest file size.
+            </span>
+          </span>
+        </label>
+        <label
+          class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none border-gray-200"
+          id="preset-lossless-label"
+        >
+          <input type="radio" name="compress-preset" value="lossless" class="sr-only" />
+          <span class="flex flex-col">
+            <span class="block text-sm font-medium text-gray-950">Lossless</span>
+            <span class="block text-xs text-gray-500 mt-1">
+              Light structural optimization preserving fidelity.
+            </span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <button
+        type="button"
+        id="compress-btn"
+        class="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50"
+      >
+        Compress All PDFs
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress & Status -->
+  <div id="compress-status-container" class="mt-6 hidden">
+    <div class="flex justify-between text-sm font-medium text-gray-700">
+      <span id="compress-status-text">Processing batch...</span>
+      <span id="compress-progress-percent">0%</span>
+    </div>
+    <div class="mt-2 h-2.5 w-full rounded-full bg-gray-200">
+      <div
+        id="compress-progress-bar"
+        class="h-2.5 rounded-full bg-indigo-600 transition-all duration-300"
+        style="width: 0%"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Result / Download -->
+  <div
+    id="compress-result-container"
+    class="mt-6 hidden rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center space-y-3"
+  >
+    <p class="text-sm font-semibold text-emerald-800">Batch compression completed successfully!</p>
+    <div id="compress-stats" class="text-xs text-emerald-700 font-medium"></div>
+    <div>
+      <a
+        id="compress-download-link"
+        href="#"
+        download="compressed-batch.zip"
+        class="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+      >
+        Download All as ZIP
+      </a>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div
+    id="compress-error-container"
+    class="mt-6 hidden rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
+  >
+    <span id="compress-error-text">An error occurred while processing batch.</span>
+  </div>
+</div>
+
+<script>
+  import { createToolWorker } from '../../lib/pdf/createToolWorker';
+  import JSZip from 'jszip';
+
+  let selectedFiles: File[] = [];
+
+  const fileInput = document.getElementById('compress-file-input') as HTMLInputElement;
+  const dropzone = document.getElementById('compress-dropzone') as HTMLElement;
+  const configContainer = document.getElementById('compress-config-container') as HTMLElement;
+  const fileListEl = document.getElementById('compress-file-list') as HTMLElement;
+  const fileCountEl = document.getElementById('compress-file-count') as HTMLElement;
+  const clearBtn = document.getElementById('compress-clear-btn') as HTMLButtonElement;
+  const compressBtn = document.getElementById('compress-btn') as HTMLButtonElement;
+  const statusContainer = document.getElementById('compress-status-container') as HTMLElement;
+  const statusText = document.getElementById('compress-status-text') as HTMLElement;
+  const progressBar = document.getElementById('compress-progress-bar') as HTMLElement;
+  const progressPercent = document.getElementById('compress-progress-percent') as HTMLElement;
+  const resultContainer = document.getElementById('compress-result-container') as HTMLElement;
+  const statsEl = document.getElementById('compress-stats') as HTMLElement;
+  const downloadLink = document.getElementById('compress-download-link') as HTMLAnchorElement;
+  const errorContainer = document.getElementById('compress-error-container') as HTMLElement;
+  const errorText = document.getElementById('compress-error-text') as HTMLElement;
+
+  const presetLabels = {
+    recommended: document.getElementById('preset-recommended-label') as HTMLElement,
+    maximum: document.getElementById('preset-maximum-label') as HTMLElement,
+    lossless: document.getElementById('preset-lossless-label') as HTMLElement,
+  };
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function renderFileList() {
+    fileListEl.innerHTML = '';
+    fileCountEl.textContent = `Selected Files (${selectedFiles.length})`;
+
+    if (selectedFiles.length === 0) {
+      configContainer.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      return;
+    }
+
+    selectedFiles.forEach((file) => {
+      const item = document.createElement('div');
+      item.className = 'flex items-center justify-between py-2 text-xs';
+      item.innerHTML = `
+        <span class="font-medium text-gray-900 truncate pr-2">${file.name}</span>
+        <span class="text-gray-500 flex-shrink-0">${formatFileSize(file.size)}</span>
+      `;
+      fileListEl.appendChild(item);
+    });
+
+    configContainer.classList.remove('hidden');
+    dropzone.classList.add('hidden');
+    errorContainer.classList.add('hidden');
+    resultContainer.classList.add('hidden');
+  }
+
+  function addFiles(files: FileList | File[]) {
+    const pdfFiles = Array.from(files).filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
+    );
+    selectedFiles = [...selectedFiles, ...pdfFiles];
+    renderFileList();
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files) {
+      addFiles(fileInput.files);
+      fileInput.value = '';
+    }
+  });
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+    if (e.dataTransfer && e.dataTransfer.files) {
+      addFiles(e.dataTransfer.files);
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    renderFileList();
+  });
+
+  document.querySelectorAll('input[name="compress-preset"]').forEach((radio) => {
+    radio.addEventListener('change', (e) => {
+      const val = (e.target as HTMLInputElement).value;
+
+      Object.keys(presetLabels).forEach((k) => {
+        const lbl = presetLabels[k as keyof typeof presetLabels];
+        if (k === val) {
+          lbl.classList.add('border-indigo-600', 'ring-2', 'ring-indigo-600');
+          lbl.classList.remove('border-gray-200');
+        } else {
+          lbl.classList.remove('border-indigo-600', 'ring-2', 'ring-indigo-600');
+          lbl.classList.add('border-gray-200');
+        }
+      });
+    });
+  });
+
+  compressBtn.addEventListener('click', async () => {
+    if (selectedFiles.length === 0) return;
+
+    const presetRadio = document.querySelector(
+      'input[name="compress-preset"]:checked',
+    ) as HTMLInputElement;
+    const preset = presetRadio ? presetRadio.value : 'recommended';
+
+    compressBtn.disabled = true;
+    errorContainer.classList.add('hidden');
+    resultContainer.classList.add('hidden');
+    statusContainer.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressPercent.textContent = '0%';
+
+    try {
+      const zip = new JSZip();
+      let totalOriginalSize = 0;
+      let totalCompressedSize = 0;
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const progressBase = (i / selectedFiles.length) * 100;
+        const progressStep = 100 / selectedFiles.length;
+
+        statusText.textContent = `Processing file ${i + 1} of ${selectedFiles.length}: ${file.name}`;
+
+        const arrayBuffer = await file.arrayBuffer();
+        totalOriginalSize += arrayBuffer.byteLength;
+
+        await new Promise<void>((resolve, reject) => {
+          const worker = createToolWorker('compress');
+          worker.run(
+            [arrayBuffer],
+            { preset },
+            {
+              onProgress: (p) => {
+                const currentPct = Math.min(
+                  100,
+                  Math.round(progressBase + (p / 100) * progressStep),
+                );
+                progressBar.style.width = `${currentPct}%`;
+                progressPercent.textContent = `${currentPct}%`;
+              },
+              onResult: ({ file: compressedBuffer, name }) => {
+                worker.terminate();
+                totalCompressedSize += compressedBuffer.byteLength;
+                const outName = name || file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
+                zip.file(outName, compressedBuffer);
+                resolve();
+              },
+              onError: (msg) => {
+                worker.terminate();
+                reject(new Error(`Failed on ${file.name}: ${msg}`));
+              },
+            },
+          );
+        });
+      }
+
+      statusText.textContent = 'Generating ZIP archive...';
+      progressBar.style.width = '100%';
+      progressPercent.textContent = '100%';
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+
+      const diff = totalOriginalSize - totalCompressedSize;
+      const percentSaved =
+        totalOriginalSize > 0 ? Math.max(0, Math.round((diff / totalOriginalSize) * 100)) : 0;
+
+      statsEl.textContent = `Processed ${selectedFiles.length} files | Original: ${formatFileSize(totalOriginalSize)} → Compressed: ${formatFileSize(totalCompressedSize)} (${percentSaved}% reduction)`;
+
+      downloadLink.href = url;
+      downloadLink.download = 'compressed-batch.zip';
+
+      statusContainer.classList.add('hidden');
+      compressBtn.disabled = false;
+      resultContainer.classList.remove('hidden');
+    } catch (err) {
+      compressBtn.disabled = false;
+      statusContainer.classList.add('hidden');
+      errorText.textContent = err instanceof Error ? err.message : 'Batch processing failed.';
+      errorContainer.classList.remove('hidden');
+    }
+  });
+</script>

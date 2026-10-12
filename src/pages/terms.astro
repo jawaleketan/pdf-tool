@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Terms of Service — PDF Utilities"
+  description="Terms and conditions governing the use of PDF Utilities browser-based tools."
+>
+  <div class="space-y-8">
+    <div class="border-b border-gray-200 pb-6">
+      <nav class="text-sm font-medium text-indigo-600 mb-2">
+        <a href="/" class="hover:underline">
+          ← Back to home
+        </a>
+      </nav>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Terms of Service</h1>
+      <p class="mt-2 text-sm text-gray-500">Last updated: October 12, 2026</p>
+    </div>
+
+    <div class="prose prose-gray max-w-none space-y-6 text-gray-700 text-sm leading-relaxed">
+      <h2 class="text-xl font-bold text-gray-900">1. Acceptance of Terms</h2>
+      <p>
+        By accessing and using PDF Utilities, you accept and agree to be bound by these Terms of
+        Service. If you do not agree to these terms, please do not use our website or tools.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">2. Use of Tools</h2>
+      <p>
+        Our tools (merge, split, compress) are provided free of charge for personal and professional
+        use directly within your web browser. You agree to use these tools only for lawful purposes
+        and in accordance with all applicable laws.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">3. Intellectual Property and File Ownership</h2>
+      <p>
+        You retain full ownership and copyright of any PDF files you process using our tools.
+        Because files are processed entirely client-side, we never claim any rights over your data.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">4. Disclaimer of Warranties</h2>
+      <p>
+        PDF Utilities are provided on an "as is" and "as available" basis without warranties of any
+        kind, whether express or implied. While we strive for high reliability and accuracy, we do
+        not warrant that the tools will be uninterrupted or error-free. Always maintain backups of
+        your important documents.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">5. Limitation of Liability</h2>
+      <p>
+        In no event shall PDF Utilities or its contributors be liable for any indirect, incidental,
+        special, consequential, or punitive damages arising out of or connected with your use of the
+        site or tools.
+      </p>
+
+      <h2 class="text-xl font-bold text-gray-900">6. Changes to Terms</h2>
+      <p>
+        We reserve the right to modify these terms at any time. Continued use of the site following
+        any changes constitutes acceptance of those changes.
+      </p>
+    </div>
+  </div>
+
+  <footer class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 space-y-2">
+    <div class="flex justify-center space-x-6 text-gray-600">
+      <a href="/privacy" class="hover:text-indigo-600">
+        Privacy Policy
+      </a>
+      <a href="/terms" class="hover:text-indigo-600">
+        Terms of Service
+      </a>
+    </div>
+    <p>
+      © {new Date().getFullYear()} PDF Utilities. All rights reserved. 100% Client-Side Processing.
+    </p>
+  </footer>
+</BaseLayout>

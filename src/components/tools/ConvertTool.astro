@@ -1,0 +1,324 @@
+---
+/**
+    ConvertTool: Interactive PDF to Word conversion island.
+    Uploads PDF to Cloudflare Pages Function endpoint (/api/convert) with strict validation,
+    rate limiting, and explicit deletion policy notices.
+*/
+---
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" data-convert-tool>
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-bold text-gray-900">PDF to Word Converter</h2>
+    <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 border border-amber-200">
+      Server-Assisted Tool
+    </span>
+  </div>
+  <p class="mt-1 text-sm text-gray-600">
+    Transform your PDF documents into editable Microsoft Word (.docx) files. Uploads are processed
+    securely and deleted immediately after conversion.
+  </p>
+
+  <!-- Deletion Policy Banner -->
+  <div class="mt-4 rounded-lg bg-blue-50 p-4 border border-blue-100 flex items-start space-x-3">
+    <svg
+      class="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+    <div class="text-xs text-blue-800">
+      <span class="font-semibold">Privacy & Deletion Policy:</span> Files sent to our conversion
+      server are held in memory only during conversion and destroyed immediately upon completion.
+      Maximum file size: 10MB.
+    </div>
+  </div>
+
+  <!-- Dropzone -->
+  <div
+    class="mt-6 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-indigo-500 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500"
+    id="convert-dropzone"
+  >
+    <svg
+      class="h-12 w-12 text-gray-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+      />
+    </svg>
+    <label
+      for="convert-file-input"
+      class="mt-4 cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-500"
+    >
+      <span>Choose PDF file</span>
+      <input
+        id="convert-file-input"
+        name="convert-file-input"
+        type="file"
+        accept=".pdf,application/pdf"
+        class="sr-only"
+      />
+    </label>
+    <p class="mt-1 text-xs text-gray-500">or drag and drop a PDF file here (up to 10MB)</p>
+  </div>
+
+  <!-- File Configuration & Controls -->
+  <div id="convert-config-container" class="mt-6 hidden space-y-6">
+    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div class="flex items-center space-x-3 truncate">
+        <svg
+          class="h-8 w-8 text-indigo-600 flex-shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <div class="truncate">
+          <p id="convert-selected-name" class="text-sm font-semibold text-gray-900 truncate">
+            document.pdf
+          </p>
+          <p id="convert-selected-meta" class="text-xs text-gray-500">
+            0 KB
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        id="convert-clear-btn"
+        class="text-sm font-medium text-rose-600 hover:text-rose-800"
+      >
+        Remove
+      </button>
+    </div>
+
+    <!-- Error banner -->
+    <div
+      id="convert-error-box"
+      class="hidden rounded-lg bg-rose-50 p-4 border border-rose-200 text-sm text-rose-800"
+    ></div>
+
+    <div class="flex justify-end">
+      <button
+        type="button"
+        id="convert-btn"
+        class="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50"
+      >
+        Convert to Word (.docx)
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress & Status -->
+  <div id="convert-status-container" class="mt-6 hidden">
+    <div class="flex justify-between text-sm font-medium text-gray-700">
+      <span id="convert-status-text">Converting PDF to Word…</span>
+      <span id="convert-progress-percent">Please wait</span>
+    </div>
+    <div class="mt-2 h-2.5 w-full rounded-full bg-gray-200 overflow-hidden">
+      <div
+        id="convert-progress-bar"
+        class="h-2.5 rounded-full bg-indigo-600 animate-pulse w-full"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Success & Download Result -->
+  <div
+    id="convert-success-container"
+    class="mt-6 hidden rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center"
+  >
+    <svg
+      class="mx-auto h-12 w-12 text-emerald-600"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+    <h3 class="mt-3 text-base font-semibold text-emerald-900">Conversion Successful!</h3>
+    <p class="mt-1 text-sm text-emerald-700">
+      Your Word document is ready for download. Server files have been deleted.
+    </p>
+    <div class="mt-4 flex justify-center space-x-3">
+      <a
+        id="convert-download-btn"
+        href="#"
+        class="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+      >
+        Download .docx
+      </a>
+      <button
+        type="button"
+        id="convert-reset-btn"
+        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        Convert Another File
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const root = document.querySelector('[data-convert-tool]');
+    if (!root) return;
+
+    const dropzone = root.querySelector('#convert-dropzone');
+    const fileInput = root.querySelector('#convert-file-input') as HTMLInputElement;
+    const configContainer = root.querySelector('#convert-config-container');
+    const statusContainer = root.querySelector('#convert-status-container');
+    const successContainer = root.querySelector('#convert-success-container');
+    const selectedName = root.querySelector('#convert-selected-name');
+    const selectedMeta = root.querySelector('#convert-selected-meta');
+    const clearBtn = root.querySelector('#convert-clear-btn');
+    const convertBtn = root.querySelector('#convert-btn') as HTMLButtonElement;
+    const errorBox = root.querySelector('#convert-error-box');
+    const downloadBtn = root.querySelector('#convert-download-btn') as HTMLAnchorElement;
+    const resetBtn = root.querySelector('#convert-reset-btn');
+
+    let selectedFile: File | null = null;
+    let downloadUrl: string | null = null;
+
+    function formatBytes(bytes: number): string {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleFile(file: File) {
+      if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+        showError('Please select a valid PDF file.');
+        return;
+      }
+      if (file.size > 10 * 1024 + 1024 * 1024 * 9) {
+        // 10MB
+        showError('File size exceeds 10MB limit.');
+        return;
+      }
+
+      selectedFile = file;
+      if (selectedName) selectedName.textContent = file.name;
+      if (selectedMeta) selectedMeta.textContent = formatBytes(file.size);
+      if (errorBox) errorBox.classList.add('hidden');
+
+      dropzone?.classList.add('hidden');
+      configContainer?.classList.remove('hidden');
+      successContainer?.classList.add('hidden');
+    }
+
+    function showError(msg: string) {
+      if (errorBox) {
+        errorBox.textContent = msg;
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    fileInput?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        handleFile(target.files[0]);
+      }
+    });
+
+    dropzone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+    });
+
+    dropzone?.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+    });
+
+    dropzone?.addEventListener('drop', (e: Event) => {
+      e.preventDefault();
+      const dragEvent = e as DragEvent;
+      dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+      if (dragEvent.dataTransfer?.files && dragEvent.dataTransfer.files[0]) {
+        handleFile(dragEvent.dataTransfer.files[0]);
+      }
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      selectedFile = null;
+      if (fileInput) fileInput.value = '';
+      configContainer?.classList.add('hidden');
+      dropzone?.classList.remove('hidden');
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      selectedFile = null;
+      if (fileInput) fileInput.value = '';
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+        downloadUrl = null;
+      }
+      successContainer?.classList.add('hidden');
+      dropzone?.classList.remove('hidden');
+    });
+
+    convertBtn?.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      configContainer?.classList.add('hidden');
+      statusContainer?.classList.remove('hidden');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const res = await fetch('/api/convert', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({ error: 'Conversion failed.' }));
+          throw new Error(errData.error || `Server error (${res.status})`);
+        }
+
+        const blob = await res.blob();
+        downloadUrl = URL.createObjectURL(blob);
+
+        if (downloadBtn) {
+          downloadBtn.href = downloadUrl;
+          const origName = selectedFile.name.replace(/\.[^/.]+$/, '');
+          downloadBtn.download = `${origName}.docx`;
+        }
+
+        statusContainer?.classList.add('hidden');
+        successContainer?.classList.remove('hidden');
+      } catch (err: unknown) {
+        statusContainer?.classList.add('hidden');
+        configContainer?.classList.remove('hidden');
+        const errorMsg = err instanceof Error ? err.message : 'Failed to convert document.';
+        showError(errorMsg);
+      }
+    });
+  })();
+</script>

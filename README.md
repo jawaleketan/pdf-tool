@@ -11,15 +11,15 @@ hosting, Vitest + Playwright, pnpm.
 
 ## Commands
 
-| Command | Action |
-| :------ | :----- |
-| `pnpm install` | Install dependencies |
-| `pnpm dev` | Start the dev server at `localhost:4321` |
-| `pnpm build` | Build the static site to `./dist/` |
-| `pnpm preview` | Serve the build locally |
-| `pnpm check` | Typecheck with `astro check` |
-| `pnpm test` | Run the unit tests (Vitest) |
-| `pnpm test:e2e` | Browser smoke flows against the build (Playwright) |
+| Command             | Action                                                                                    |
+| :------------------ | :---------------------------------------------------------------------------------------- |
+| `pnpm install`      | Install dependencies                                                                      |
+| `pnpm dev`          | Start the dev server at `localhost:4321`                                                  |
+| `pnpm build`        | Build the static site to `./dist/`                                                        |
+| `pnpm preview`      | Serve the build locally                                                                   |
+| `pnpm check`        | Typecheck with `astro check`                                                              |
+| `pnpm test`         | Run the unit tests (Vitest)                                                               |
+| `pnpm test:e2e`     | Browser smoke flows against the build (Playwright)                                        |
 | `pnpm test:headers` | Same flows against `wrangler pages dev`, which applies `public/_headers` and `functions/` |
 
 ## Site URL

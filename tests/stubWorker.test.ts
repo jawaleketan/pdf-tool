@@ -10,7 +10,10 @@ import { startStubWorker } from '../src/lib/pdf/stubWorker';
  */
 
 const posted: unknown[] = [];
-let scope: { postMessage: (message: unknown) => void; onmessage: ((event: MessageEvent<unknown>) => void) | null };
+let scope: {
+  postMessage: (message: unknown) => void;
+  onmessage: ((event: MessageEvent<unknown>) => void) | null;
+};
 
 function deliver(data: unknown): void {
   if (!scope.onmessage) throw new Error('the worker never registered its message handler');

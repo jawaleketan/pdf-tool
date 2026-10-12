@@ -1,0 +1,315 @@
+---
+/**
+    MergeTool: Interactive browser-based PDF merging island.
+    Uses createToolWorker('merge') to process PDFs via Web Worker.
+    Zero main-thread blocking, fully responsive, accessible (WCAG 2.1 AA).
+*/
+---
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" data-merge-tool>
+  <h2 class="text-xl font-bold text-gray-900">Merge PDF Files</h2>
+  <p class="mt-1 text-sm text-gray-600">
+    Combine multiple PDF documents into one single file instantly in your browser. Your files never
+    leave your device.
+  </p>
+
+  <!-- Dropzone -->
+  <div
+    class="mt-6 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-indigo-500 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500"
+    id="dropzone"
+  >
+    <svg
+      class="h-12 w-12 text-gray-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+      />
+    </svg>
+    <label
+      for="file-input"
+      class="mt-4 cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-500"
+    >
+      <span>Choose PDF files</span>
+      <input
+        id="file-input"
+        name="file-input"
+        type="file"
+        accept=".pdf,application/pdf"
+        multiple
+        class="sr-only"
+      />
+    </label>
+    <p class="mt-1 text-xs text-gray-500">or drag and drop PDF files here</p>
+  </div>
+
+  <!-- File List -->
+  <div id="file-list-container" class="mt-6 hidden">
+    <h3 class="text-sm font-semibold text-gray-900">
+      Selected Files (<span id="file-count">0</span>)
+    </h3>
+    <ul
+      id="file-list"
+      class="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-gray-50"
+    >
+      <!-- File items injected via client script -->
+    </ul>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+      <button
+        type="button"
+        id="clear-btn"
+        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400"
+      >
+        Clear all
+      </button>
+      <button
+        type="button"
+        id="merge-btn"
+        class="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:opacity-50"
+      >
+        Merge PDFs
+      </button>
+    </div>
+  </div>
+
+  <!-- Progress & Status -->
+  <div id="status-container" class="mt-6 hidden">
+    <div class="flex justify-between text-sm font-medium text-gray-700">
+      <span id="status-text">Processing PDFs…</span>
+      <span id="progress-percent">0%</span>
+    </div>
+    <div class="mt-2 h-2.5 w-full rounded-full bg-gray-200">
+      <div
+        id="progress-bar"
+        class="h-2.5 rounded-full bg-indigo-600 transition-all duration-300"
+        style="width: 0%"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Result / Download -->
+  <div
+    id="result-container"
+    class="mt-6 hidden rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center"
+  >
+    <p class="text-sm font-semibold text-emerald-800">Your PDFs were merged successfully!</p>
+    <a
+      id="download-link"
+      href="#"
+      download="merged.pdf"
+      class="mt-3 inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
+    >
+      Download Merged PDF
+    </a>
+  </div>
+
+  <!-- Error Alert -->
+  <div
+    id="error-container"
+    class="mt-6 hidden rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
+  >
+    <span id="error-text">An error occurred while merging PDFs.</span>
+  </div>
+</div>
+
+<script>
+  import { createToolWorker } from '../../lib/pdf/createToolWorker';
+
+  interface SelectedFile {
+    id: string;
+    file: File;
+  }
+
+  let selectedFiles: SelectedFile[] = [];
+
+  const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  const dropzone = document.getElementById('dropzone') as HTMLElement;
+  const fileListContainer = document.getElementById('file-list-container') as HTMLElement;
+  const fileList = document.getElementById('file-list') as HTMLUListElement;
+  const fileCount = document.getElementById('file-count') as HTMLElement;
+  const clearBtn = document.getElementById('clear-btn') as HTMLButtonElement;
+  const mergeBtn = document.getElementById('merge-btn') as HTMLButtonElement;
+  const statusContainer = document.getElementById('status-container') as HTMLElement;
+  const statusText = document.getElementById('status-text') as HTMLElement;
+  const progressBar = document.getElementById('progress-bar') as HTMLElement;
+  const progressPercent = document.getElementById('progress-percent') as HTMLElement;
+  const resultContainer = document.getElementById('result-container') as HTMLElement;
+  const downloadLink = document.getElementById('download-link') as HTMLAnchorElement;
+  const errorContainer = document.getElementById('error-container') as HTMLElement;
+  const errorText = document.getElementById('error-text') as HTMLElement;
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function renderFileList() {
+    fileList.innerHTML = '';
+    fileCount.textContent = selectedFiles.length.toString();
+
+    if (selectedFiles.length === 0) {
+      fileListContainer.classList.add('hidden');
+      return;
+    }
+
+    fileListContainer.classList.remove('hidden');
+
+    selectedFiles.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.className = 'flex items-center justify-between px-4 py-3 text-sm';
+      li.innerHTML = `
+        <div class="flex items-center space-x-3 truncate">
+          <span class="font-medium text-gray-500">#${index + 1}</span>
+          <span class="truncate font-medium text-gray-900" title="${item.file.name}">${item.file.name}</span>
+          <span class="text-xs text-gray-500">(${formatFileSize(item.file.size)})</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" data-action="up" data-index="${index}" class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30" ${index === 0 ? 'disabled' : ''} aria-label="Move up">
+            ↑
+          </button>
+          <button type="button" data-action="down" data-index="${index}" class="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30" ${index === selectedFiles.length - 1 ? 'disabled' : ''} aria-label="Move down">
+            ↓
+          </button>
+          <button type="button" data-action="remove" data-index="${index}" class="p-1 text-rose-400 hover:text-rose-600" aria-label="Remove file">
+            ✕
+          </button>
+        </div>
+      `;
+      fileList.appendChild(li);
+    });
+  }
+
+  function addFiles(files: FileList | File[]) {
+    errorContainer.classList.add('hidden');
+    resultContainer.classList.add('hidden');
+
+    Array.from(files).forEach((file) => {
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        selectedFiles.push({
+          id: Math.random().toString(36).substring(2, 9),
+          file,
+        });
+      }
+    });
+
+    renderFileList();
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files) {
+      addFiles(fileInput.files);
+      fileInput.value = '';
+    }
+  });
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('border-indigo-500', 'bg-indigo-50/50');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+    if (e.dataTransfer && e.dataTransfer.files) {
+      addFiles(e.dataTransfer.files);
+    }
+  });
+
+  fileList.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('button');
+    if (!btn) return;
+
+    const action = btn.getAttribute('data-action');
+    const indexStr = btn.getAttribute('data-index');
+    if (!action || indexStr === null) return;
+
+    const index = parseInt(indexStr, 10);
+
+    if (action === 'remove') {
+      selectedFiles.splice(index, 1);
+    } else if (action === 'up' && index > 0) {
+      const temp = selectedFiles[index];
+      selectedFiles[index] = selectedFiles[index - 1];
+      selectedFiles[index - 1] = temp;
+    } else if (action === 'down' && index < selectedFiles.length - 1) {
+      const temp = selectedFiles[index];
+      selectedFiles[index] = selectedFiles[index + 1];
+      selectedFiles[index + 1] = temp;
+    }
+
+    renderFileList();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    renderFileList();
+    resultContainer.classList.add('hidden');
+    errorContainer.classList.add('hidden');
+  });
+
+  mergeBtn.addEventListener('click', async () => {
+    if (selectedFiles.length === 0) return;
+
+    mergeBtn.disabled = true;
+    errorContainer.classList.add('hidden');
+    resultContainer.classList.add('hidden');
+    statusContainer.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressPercent.textContent = '0%';
+    statusText.textContent = 'Reading PDF files…';
+
+    try {
+      const arrayBuffers = await Promise.all(selectedFiles.map((item) => item.file.arrayBuffer()));
+
+      const worker = createToolWorker('merge');
+
+      worker.run(arrayBuffers, undefined, {
+        onProgress: (percent) => {
+          progressBar.style.width = `${percent}%`;
+          progressPercent.textContent = `${percent}%`;
+          if (percent < 50) {
+            statusText.textContent = 'Combining pages…';
+          } else {
+            statusText.textContent = 'Generating final PDF…';
+          }
+        },
+        onResult: ({ file, name }) => {
+          worker.terminate();
+          statusContainer.classList.add('hidden');
+          mergeBtn.disabled = false;
+
+          const blob = new Blob([file], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          downloadLink.href = url;
+          downloadLink.download = name || 'merged.pdf';
+          resultContainer.classList.remove('hidden');
+        },
+        onError: (message) => {
+          worker.terminate();
+          statusContainer.classList.add('hidden');
+          mergeBtn.disabled = false;
+          errorText.textContent = message;
+          errorContainer.classList.remove('hidden');
+        },
+      });
+    } catch (err) {
+      mergeBtn.disabled = false;
+      statusContainer.classList.add('hidden');
+      errorText.textContent = err instanceof Error ? err.message : 'Failed to read PDF files.';
+      errorContainer.classList.remove('hidden');
+    }
+  });
+</script>

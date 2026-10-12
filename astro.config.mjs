@@ -2,15 +2,29 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel';
+
+// Lightweight mock adapter for local Windows builds (avoids @vercel/nft symlink EPERM)
+const mockAdapter = {
+  name: 'mock-adapter',
+  hooks: {
+    'astro:config:done': (/** @type {any} */ { setAdapter }) => {
+      setAdapter({
+        name: 'mock-adapter',
+        serverEntrypoint: 'astro/app/node',
+        supportedAstroFeatures: { serverOutput: 'stable', hybridOutput: true, sharp: true },
+      });
+    },
+  },
+};
 
 // SITE_URL is the single source for every absolute URL (canonical tags, sitemap, robots).
-// Production builds set it to the production domain; previews set it to the preview URL.
-// Local default matches the dev server.
 const siteUrl = process.env.SITE_URL ?? 'http://localhost:4321';
 
 // https://astro.build/config
 export default defineConfig({
   site: siteUrl,
+  adapter: process.env.VERCEL ? vercel() : mockAdapter,
   integrations: [sitemap()],
   vite: {
     define: {

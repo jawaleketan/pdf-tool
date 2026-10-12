@@ -1,0 +1,87 @@
+---
+/**
+  AdSlot component: Consent-gated ad unit with CLS prevention (AC-1, AC-2, AC-3).
+  Renders placeholder/empty until consent is granted.
+*/
+interface Props {
+  slotType?: 'banner' | 'sidebar' | 'in-feed';
+  class?: string;
+}
+
+const { slotType = 'banner', class: className = '' } = Astro.props;
+
+const minHeightClass =
+  slotType === 'sidebar'
+    ? 'min-h-[250px]'
+    : slotType === 'in-feed'
+      ? 'min-h-[150px]'
+      : 'min-h-[90px]';
+---
+
+<div
+  data-ad-slot
+  data-slot-type={slotType}
+  class={`ad-slot-container my-6 w-full overflow-hidden rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4 text-center transition-all ${minHeightClass} ${className}`}
+>
+  <div
+    data-ad-placeholder
+    class="flex h-full w-full flex-col items-center justify-center text-gray-400 text-xs"
+  >
+    <span class="font-medium uppercase tracking-wider text-gray-400">Advertisement</span>
+    <p class="mt-1 text-[11px] text-gray-400">
+      Ads are hidden until advertising consent is accepted.
+    </p>
+  </div>
+  <div data-ad-content class="hidden h-full w-full items-center justify-center">
+    <!-- Google AdSense / Partner Ad Unit Integration -->
+    <div class="rounded-lg bg-white p-4 shadow-xs border border-gray-100 text-center w-full">
+      <span class="text-[10px] font-semibold text-indigo-500 uppercase tracking-widest block mb-1">
+        Sponsored Partner
+      </span>
+      <p class="text-xs text-gray-600 font-medium">
+        Fast, reliable PDF utilities powered by community support.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initAdSlots() {
+    const CONSENT_KEY = 'pdf_utils_consent';
+
+    function hasConsent() {
+      try {
+        return localStorage.getItem(CONSENT_KEY) === 'accepted';
+      } catch {
+        return false;
+      }
+    }
+
+    const slots = document.querySelectorAll('[data-ad-slot]');
+
+    slots.forEach((slot) => {
+      const placeholder = slot.querySelector('[data-ad-placeholder]');
+      const content = slot.querySelector('[data-ad-content]');
+
+      if (hasConsent()) {
+        placeholder?.classList.add('hidden');
+        content?.classList.remove('hidden');
+        content?.classList.add('flex');
+      } else {
+        placeholder?.classList.remove('hidden');
+        content?.classList.add('hidden');
+        content?.classList.remove('flex');
+      }
+    });
+  }
+
+  // Run on mount
+  initAdSlots();
+
+  // Listen for real-time consent updates
+  window.addEventListener('pdf-consent-updated', ((e: CustomEvent) => {
+    if (e.detail === 'accepted') {
+      initAdSlots();
+    }
+  }) as EventListener);
+</script>

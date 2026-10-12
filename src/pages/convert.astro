@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ConvertTool from '../components/tools/ConvertTool.astro';
+import AdSlot from '../components/AdSlot.astro';
+import WorkerProbe from '../components/WorkerProbe.astro';
+---
+
+<BaseLayout
+  title="PDF to Word Converter — Convert PDF to Editable .docx Online Securely"
+  description="Convert PDF documents to editable Microsoft Word (.docx) files securely with instant processing and strict deletion policies."
+>
+  <!-- Hero Section -->
+  <section class="py-8 text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+      PDF to Word Converter
+    </h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+      Transform your PDF documents into editable Microsoft Word (.docx) files with secure server
+      processing and instant file deletion.
+    </p>
+  </section>
+
+  <!-- Primary Tool: Convert -->
+  <section class="mt-6">
+    <ConvertTool />
+    <AdSlot slotType="banner" class="mt-6" />
+  </section>
+
+  <footer class="mt-20 border-t border-gray-200 pt-8 text-center text-sm text-gray-500 space-y-2">
+    <div class="flex justify-center space-x-6 text-gray-600">
+      <a href="/privacy" class="hover:text-indigo-600">
+        Privacy Policy
+      </a>
+      <a href="/terms" class="hover:text-indigo-600">
+        Terms of Service
+      </a>
+    </div>
+    <p>
+      © {new Date().getFullYear()} PDF Utilities. All rights reserved. Secure Cloudflare Processing
+      & Deletion.
+    </p>
+  </footer>
+
+  <WorkerProbe />
+</BaseLayout>
